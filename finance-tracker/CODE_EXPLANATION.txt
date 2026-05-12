@@ -1,0 +1,159 @@
+============================================================
+   FINANCE TRACKER - CODE FILES EXPLANATION
+============================================================
+
+This project is a Java Spring Boot web app for tracking 
+personal finances across multiple currencies, with AI-powered 
+spending predictions using TensorFlow.js.
+
+
+------------------------------------------------------------
+  CONFIGURATION FILES
+------------------------------------------------------------
+
+1. pom.xml
+   Maven build file. Defines project dependencies:
+   - Spring Boot 3.2 (web framework)
+   - Gson (JSON processing)
+   Runs with: mvn spring-boot:run
+
+2. application.properties
+   Server settings. Sets port to 8080 and tells Spring 
+   Boot where to find HTML/CSS/JS files (static/ folder).
+
+
+------------------------------------------------------------
+  JAVA BACKEND FILES (src/main/java/com/financetracker/)
+------------------------------------------------------------
+
+3. FinanceTrackerApplication.java
+   The main entry point. One line does everything:
+   SpringApplication.run() starts the embedded Tomcat server.
+   Run this class to launch the app on localhost:8080.
+
+4. model/User.java
+   Simple data class (POJO) for users. Fields:
+   id, username, password, email, preferredCurrency.
+   Just stores data - no logic here.
+
+5. model/Transaction.java
+   Data class for financial transactions. Fields:
+   id, userId, type (income/expense), amount, currency,
+   category, description, date.
+
+6. service/UserService.java
+   Handles user registration and login logic.
+   Stores users in a HashMap (in-memory, no database).
+   - register(): Creates user if username is available
+   - login(): Checks username + password match
+
+7. service/TransactionService.java
+   Manages all transaction operations using HashMap storage.
+   - addTransaction(): Saves a new transaction
+   - getTransactions(): Returns all transactions for a user
+   - deleteTransaction(): Removes a transaction by ID
+   - getCategorySummary(): Groups expenses by category
+   - getTotals(): Calculates total income, expense, balance
+
+8. service/CurrencyService.java
+   Currency conversion with 12 currencies (USD, EUR, GBP,
+   INR, JPY, CAD, AUD, CNY, BRL, MXN, KRW, SGD).
+   All rates are relative to 1 USD.
+   - convert(): Converts amount from one currency to another
+     Formula: amount / fromRate * toRate
+
+9. controller/AuthController.java
+   REST API for authentication. Two endpoints:
+   - POST /api/auth/register -> Creates new user account
+   - POST /api/auth/login    -> Validates credentials
+   Returns JSON with success/failure message.
+
+10. controller/TransactionController.java
+    REST API for transaction CRUD operations:
+    - POST   /api/transactions           -> Add transaction
+    - GET    /api/transactions/{userId}   -> List all (with 
+              optional ?convertTo=EUR for currency conversion)
+    - DELETE /api/transactions/{userId}/{id} -> Delete one
+    - GET    /api/transactions/{userId}/summary -> Get stats
+
+11. controller/CurrencyController.java
+    REST API for currency features:
+    - GET /api/currency/list    -> All currencies with rates
+    - GET /api/currency/convert -> Convert between currencies
+      Example: /api/currency/convert?amount=100&from=USD&to=INR
+
+
+------------------------------------------------------------
+  FRONTEND FILES (src/main/resources/static/)
+------------------------------------------------------------
+
+12. index.html
+    Login and Registration page. Features:
+    - Tab switcher between Sign In / Sign Up forms
+    - Sends form data to /api/auth/* endpoints via fetch()
+    - Saves userId and username in sessionStorage on success
+    - Redirects to dashboard.html after login
+
+13. dashboard.html
+    Main app dashboard with 4 sections:
+    - Overview: Stats cards + charts (Chart.js)
+    - Transactions: Add/view/delete transactions form
+    - Currency: Converter + exchange rates display
+    - AI Predict: TensorFlow.js spending prediction
+    Loads Chart.js and TensorFlow.js from CDN.
+
+14. css/style.css
+    All styling in one file. Dark theme with:
+    - Glassmorphism cards (blur + transparency)
+    - Purple/indigo gradient accents
+    - Smooth hover animations and transitions
+    - Responsive layout (sidebar collapses on mobile)
+    - Custom scrollbar styling
+
+15. js/auth.js
+    Login page JavaScript:
+    - switchTab(): Toggles between login/register forms
+    - handleLogin(): Sends POST to /api/auth/login
+    - handleRegister(): Sends POST to /api/auth/register
+    - Stores user session in sessionStorage
+    - Auto-redirects if already logged in
+
+16. js/dashboard.js
+    Main dashboard JavaScript (~200 lines):
+    - showSection(): Switches between 4 dashboard tabs
+    - loadDashboard(): Fetches transactions + summary data
+    - addTransaction(): POSTs new transaction to API
+    - deleteTxn(): DELETEs a transaction
+    - renderCategoryChart(): Doughnut chart (Chart.js)
+    - renderIncomeExpenseChart(): Bar chart (Chart.js)
+    - convertCurrency(): Calls currency conversion API
+    - loadRates(): Displays exchange rate grid
+
+17. js/tf-predictor.js
+    TensorFlow.js AI prediction module:
+    - Fetches user's expense history
+    - Normalizes data for neural network training
+    - Builds a 3-layer model (8 -> 4 -> 1 neurons)
+    - Trains for 100 epochs using Adam optimizer
+    - Predicts next 3 expense values
+    - Renders prediction chart with actual vs predicted
+
+
+------------------------------------------------------------
+  HOW IT ALL WORKS TOGETHER
+------------------------------------------------------------
+
+1. User opens http://localhost:8080
+2. Spring Boot serves index.html (login page)
+3. User registers -> auth.js sends data to AuthController
+4. AuthController calls UserService to save user in memory
+5. On success, browser redirects to dashboard.html
+6. dashboard.js loads transactions from TransactionController
+7. Charts render using Chart.js with summary data
+8. Currency converter calls CurrencyController for rates
+9. AI Predict uses TensorFlow.js (runs in browser, not server)
+
+NOTE: All data is stored in memory (HashMap). Restarting
+the server will clear all users and transactions.
+
+============================================================

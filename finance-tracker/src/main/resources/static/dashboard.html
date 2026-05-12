@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Finance Tracker — Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.15.0/dist/tf.min.js"></script>
+</head>
+<body class="dashboard-page">
+    <!-- Sidebar -->
+    <nav class="sidebar" id="sidebar">
+        <div class="sidebar-logo"><span>💰</span> FinTrack</div>
+        <ul class="sidebar-nav">
+            <li class="nav-item active" onclick="showSection('overview')">📊 Overview</li>
+            <li class="nav-item" onclick="showSection('transactions')">💳 Transactions</li>
+            <li class="nav-item" onclick="showSection('converter')">💱 Currency</li>
+            <li class="nav-item" onclick="showSection('predictions')">🤖 AI Predict</li>
+        </ul>
+        <div class="sidebar-footer">
+            <span id="sidebarUser">User</span>
+            <button class="logout-btn" onclick="logout()">Logout</button>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Top Bar -->
+        <header class="top-bar">
+            <h2 id="sectionTitle">Overview</h2>
+            <div class="top-bar-right">
+                <select id="displayCurrency" onchange="changeDisplayCurrency()">
+                    <option value="USD">🇺🇸 USD</option>
+                    <option value="EUR">🇪🇺 EUR</option>
+                    <option value="GBP">🇬🇧 GBP</option>
+                    <option value="INR">🇮🇳 INR</option>
+                    <option value="JPY">🇯🇵 JPY</option>
+                    <option value="CAD">🇨🇦 CAD</option>
+                    <option value="AUD">🇦🇺 AUD</option>
+                    <option value="CNY">🇨🇳 CNY</option>
+                    <option value="BRL">🇧🇷 BRL</option>
+                    <option value="KRW">🇰🇷 KRW</option>
+                    <option value="SGD">🇸🇬 SGD</option>
+                </select>
+                <span class="user-badge" id="userBadge">U</span>
+            </div>
+        </header>
+
+        <!-- Overview Section -->
+        <section id="overviewSection" class="section active">
+            <div class="stats-grid">
+                <div class="stat-card income-card">
+                    <div class="stat-label">Total Income</div>
+                    <div class="stat-value" id="totalIncome">$0.00</div>
+                </div>
+                <div class="stat-card expense-card">
+                    <div class="stat-label">Total Expenses</div>
+                    <div class="stat-value" id="totalExpense">$0.00</div>
+                </div>
+                <div class="stat-card balance-card">
+                    <div class="stat-label">Balance</div>
+                    <div class="stat-value" id="totalBalance">$0.00</div>
+                </div>
+            </div>
+            <div class="charts-grid">
+                <div class="chart-card">
+                    <h3>Spending by Category</h3>
+                    <canvas id="categoryChart"></canvas>
+                </div>
+                <div class="chart-card">
+                    <h3>Income vs Expenses</h3>
+                    <canvas id="incomeExpenseChart"></canvas>
+                </div>
+            </div>
+            <div class="recent-card">
+                <h3>Recent Transactions</h3>
+                <div id="recentList" class="transaction-list"></div>
+            </div>
+        </section>
+
+        <!-- Transactions Section -->
+        <section id="transactionsSection" class="section">
+            <div class="add-transaction-card">
+                <h3>Add Transaction</h3>
+                <form id="addTransactionForm" onsubmit="addTransaction(event)">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Type</label>
+                            <select id="txnType" required>
+                                <option value="expense">Expense</option>
+                                <option value="income">Income</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Amount</label>
+                            <input type="number" id="txnAmount" step="0.01" min="0.01" placeholder="0.00" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Currency</label>
+                            <select id="txnCurrency">
+                                <option value="USD">USD</option>
+                                <option value="EUR">EUR</option>
+                                <option value="GBP">GBP</option>
+                                <option value="INR">INR</option>
+                                <option value="JPY">JPY</option>
+                                <option value="CAD">CAD</option>
+                                <option value="AUD">AUD</option>
+                                <option value="CNY">CNY</option>
+                                <option value="BRL">BRL</option>
+                                <option value="KRW">KRW</option>
+                                <option value="SGD">SGD</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Category</label>
+                            <select id="txnCategory" required>
+                                <option value="Food">🍔 Food</option>
+                                <option value="Transport">🚗 Transport</option>
+                                <option value="Shopping">🛍️ Shopping</option>
+                                <option value="Bills">📄 Bills</option>
+                                <option value="Entertainment">🎬 Entertainment</option>
+                                <option value="Health">🏥 Health</option>
+                                <option value="Salary">💼 Salary</option>
+                                <option value="Freelance">💻 Freelance</option>
+                                <option value="Investment">📈 Investment</option>
+                                <option value="Other">📌 Other</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Description</label>
+                            <input type="text" id="txnDescription" placeholder="What was this for?">
+                        </div>
+                        <div class="form-group">
+                            <label>Date</label>
+                            <input type="date" id="txnDate" required>
+                        </div>
+                    </div>
+                    <button type="submit" class="submit-btn">Add Transaction</button>
+                </form>
+            </div>
+            <div class="all-transactions-card">
+                <h3>All Transactions</h3>
+                <div id="allTransactionsList" class="transaction-list"></div>
+                <p id="noTransactions" class="empty-msg">No transactions yet. Add one above!</p>
+            </div>
+        </section>
+
+        <!-- Currency Converter Section -->
+        <section id="converterSection" class="section">
+            <div class="converter-card">
+                <h3>Currency Converter</h3>
+                <div class="converter-body">
+                    <div class="converter-input">
+                        <label>Amount</label>
+                        <input type="number" id="convertAmount" value="100" step="0.01" min="0">
+                    </div>
+                    <div class="converter-input">
+                        <label>From</label>
+                        <select id="convertFrom">
+                            <option value="USD">USD - US Dollar</option>
+                            <option value="EUR">EUR - Euro</option>
+                            <option value="GBP">GBP - British Pound</option>
+                            <option value="INR">INR - Indian Rupee</option>
+                            <option value="JPY">JPY - Japanese Yen</option>
+                            <option value="CAD">CAD - Canadian Dollar</option>
+                            <option value="AUD">AUD - Australian Dollar</option>
+                            <option value="CNY">CNY - Chinese Yuan</option>
+                            <option value="BRL">BRL - Brazilian Real</option>
+                            <option value="KRW">KRW - Korean Won</option>
+                            <option value="SGD">SGD - Singapore Dollar</option>
+                        </select>
+                    </div>
+                    <button class="swap-btn" onclick="swapCurrencies()">⇄</button>
+                    <div class="converter-input">
+                        <label>To</label>
+                        <select id="convertTo">
+                            <option value="EUR">EUR - Euro</option>
+                            <option value="USD">USD - US Dollar</option>
+                            <option value="GBP">GBP - British Pound</option>
+                            <option value="INR">INR - Indian Rupee</option>
+                            <option value="JPY">JPY - Japanese Yen</option>
+                            <option value="CAD">CAD - Canadian Dollar</option>
+                            <option value="AUD">AUD - Australian Dollar</option>
+                            <option value="CNY">CNY - Chinese Yuan</option>
+                            <option value="BRL">BRL - Brazilian Real</option>
+                            <option value="KRW">KRW - Korean Won</option>
+                            <option value="SGD">SGD - Singapore Dollar</option>
+                        </select>
+                    </div>
+                    <button class="convert-btn" onclick="convertCurrency()">Convert</button>
+                </div>
+                <div class="convert-result" id="convertResult"></div>
+            </div>
+            <div class="rates-card">
+                <h3>Exchange Rates (Base: USD)</h3>
+                <div id="ratesGrid" class="rates-grid"></div>
+            </div>
+        </section>
+
+        <!-- AI Predictions Section -->
+        <section id="predictionsSection" class="section">
+            <div class="prediction-card">
+                <h3>🤖 AI Spending Prediction</h3>
+                <p class="prediction-desc">Using TensorFlow.js to analyze your spending patterns and predict future expenses.</p>
+                <button class="predict-btn" onclick="runPrediction()">Run AI Prediction</button>
+                <div id="predictionResult" class="prediction-result"></div>
+                <canvas id="predictionChart" style="display:none;margin-top:20px;"></canvas>
+            </div>
+        </section>
+    </main>
+
+    <script src="js/dashboard.js"></script>
+    <script src="js/tf-predictor.js"></script>
+</body>
+</html>
